@@ -119,12 +119,16 @@ class Resoudre:
                             for capacite in collaborateur.capacites:
                                 # Colaborateur disponible avec compétence correspondante
                                 if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                    if(collaborateur in collaborateurSurProjet):
+                                        break
                                     collaborateurSurProjet.append(collaborateur)
                                     #print("Colaborateur trouvé : ", collaborateur.nom)
                                     collaborateurTrouve = True
                                     break # Sortie de la boucle capacite
                         if collaborateurTrouve:
                             break # Sortie de la boucle Collaborateur
+                    if not collaborateurTrouve:
+                        break # Sortie du projet
                 if(len(collaborateurSurProjet)==projet.nombre_activites):
                     for collaborateur in collaborateurSurProjet:
                         collaborateur.disponible = False
@@ -133,7 +137,7 @@ class Resoudre:
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathC)
+resolution.generer(pathB)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
