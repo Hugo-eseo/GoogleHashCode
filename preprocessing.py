@@ -13,10 +13,22 @@ class Collaborateur:
         self.capacites = []
         self.nombre_capacites = 0
         self.disponible = True
+        self.activite_en_cours = None
     
     def ajouter_capacite(self, capacite, niveau):
-        self.capacites.append((capacite, niveau))
+        self.capacites.append([capacite, niveau])
         self.nombre_capacites += 1
+
+    def indexCapacite(self, capacite):
+        for i in range(self.nombre_capacites):
+            if capacite[0] == self.capacites[i][0]:
+                return i
+        return None
+
+    def amelioration(self):
+        indexC = self.indexCapacite(self.activite_en_cours)
+        if self.capacites[indexC][1] <= self.activite_en_cours[1]:
+            self.capacites[indexC][1] += 1
 
     def __repr__(self):
         return f"{self.nom} {self.capacites}"
@@ -38,10 +50,11 @@ class Projet:
         self.fini = False
     
     def ajouter_activite(self, activite, niveau):
-        self.activites.append((activite, niveau))
+        self.activites.append([activite, niveau])
 
-    def ajouterCollaborateur(self, collabo):
+    def ajouterCollaborateur(self, collabo, activite):
         collabo.disponible = False
+        collabo.activite_en_cours = activite
         self.collaborateurs.append(collabo)
         if len(self.collaborateurs) == self.nombre_activites:
             self.en_cours = True
@@ -58,6 +71,7 @@ class Projet:
                 self.fini = True
                 for collabo in self.collaborateurs:
                     collabo.disponible = True
+                    collabo.amelioration()
 
     def rechercheActivite(self):
         self.index_activite_recherchee += 1
@@ -108,6 +122,7 @@ class Resoudre:
             # Si on arrive à la date limite du projet
             if self.day < projet.date_limite_depart + projet.score:
                 collaborateurSurProjet = []
+                collaborateurSurProjeBis = []
                 # On parcours les activités du projet
                 for activite in projet.activites:
                     #print("Acitvité : ", activite)
@@ -119,7 +134,10 @@ class Resoudre:
                             for capacite in collaborateur.capacites:
                                 # Colaborateur disponible avec compétence correspondante
                                 if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
-                                    collaborateurSurProjet.append(collaborateur)
+                                    if(collaborateur in collaborateurSurProjeBis):
+                                        break
+                                    collaborateurSurProjet.append((collaborateur, activite))
+                                    collaborateurSurProjeBis.append((collaborateur))
                                     #print("Colaborateur trouvé : ", collaborateur.nom)
                                     collaborateurTrouve = True
                                     break # Sortie de la boucle capacite
@@ -127,13 +145,13 @@ class Resoudre:
                             break # Sortie de la boucle Collaborateur
                 if(len(collaborateurSurProjet)==projet.nombre_activites):
                     for collaborateur in collaborateurSurProjet:
-                        collaborateur.disponible = False
-                        projet.ajouterCollaborateur(collaborateur)
+                        collaborateur[0].disponible = False
+                        projet.ajouterCollaborateur(collaborateur[0], collaborateur[1])
         self.day+=1
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathC)
+resolution.generer(pathE)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
