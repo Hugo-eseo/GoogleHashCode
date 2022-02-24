@@ -14,7 +14,7 @@ class Collaborateur:
         self.capacites = []
         self.nombre_capacites = 0
         self.disponible = True
-
+    
     def ajouter_capacite(self, capacite, niveau):
         self.capacites.append((capacite, niveau))
         self.nombre_capacites += 1
@@ -32,12 +32,34 @@ class Projet:
         self.best_before = best_before
         self.nombre_activites = nombre_activites
         self.activites = []
+        self.index_activite_recherchee = -1
+        self.collaborateurs = []
         self.date_limite_depart = self.best_before - self.jours
+        self.en_cours = False
+        self.fini = False
     
     def ajouter_activite(self, activite, niveau):
         self.activites.append((activite, niveau))
         self.nombre_activites += 1
-    
+
+    def ajouterCollaborateur(self, collabo):
+        collabo.disponible = False
+        self.collaborateurs.append(collabo)
+        if len(self.collaborateurs) == self.nombre_activites:
+            self.en_cours = True
+
+    def diminuerJour(self):
+        if self.en_cours and not self.fini:
+            self.jours -= 1
+            if self.jours == 0:
+                self.fini = True
+                for collabo in self.collaborateurs:
+                    collabo.disponible = True
+
+    def rechercheActivite(self):
+        self.index_activite_recherchee += 1
+        return self.activites[self.index_activite_recherchee]
+
     def __repr__(self):
         return f"{self.nom} Jours:{self.jours} Score:{self.score} BestBefore:{self.best_before} Nombre activites:{self.nombre_activites} DateLimiteDepart:{self.date_limite_depart}\n {self.activites}"
 
