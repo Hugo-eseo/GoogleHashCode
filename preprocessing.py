@@ -39,13 +39,17 @@ class Projet:
     
     def ajouter_activite(self, activite, niveau):
         self.activites.append((activite, niveau))
-        self.nombre_activites += 1
 
     def ajouterCollaborateur(self, collabo):
         collabo.disponible = False
         self.collaborateurs.append(collabo)
         if len(self.collaborateurs) == self.nombre_activites:
             self.en_cours = True
+            with open("solution", "a") as fichier:
+                fichier.write("\n"+self.nom + "\n")
+                for collabo in self.collaborateurs:
+                    fichier.write(collabo.nom + " ")
+            #print("Projet démarré !")
 
     def diminuerJour(self):
         if self.en_cours and not self.fini:
@@ -99,50 +103,52 @@ class Resoudre:
     
         # On parcours les projets
         for projet in self.projets:
-            if projet.fini:
+            if projet.fini or projet.en_cours:
                 continue
-            projetNonRealisable = False
             # Si on arrive à la date limite du projet
-            if projet.date_limite_depart == self.day:
+            if self.day < projet.date_limite_depart + projet.score:
+                collaborateurSurProjet = []
                 # On parcours les activités du projet
                 for activite in projet.activites:
+                    #print("Acitvité : ", activite)
                     collaborateurTrouve = False
-                    if not collaborateurTrouve:
-                        # On parcours la liste des collaborateurs
-                        for collaborateur in self.collaborateurs:
-                            if collaborateur.disponible:
-                                # On parcours la liste des capacités du collaborateur
-                                for capacite in collaborateur.capacites:
-                                    # Colaborateur disponible avec compétence correspondante
-                                    if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
-                                        collaborateur.disponible = False
-                                        projet.ajouterCollaborateur(collaborateur)
-                                        collaborateurTrouve = True
-                                        break # Sortie de la boucle capacite
-                            if collaborateurTrouve:
-                                break # Sortie de la boucle Collaborateur
-                        if not collaborateurTrouve:
-                            projetNonRealisable = True
-                if not projetNonRealisable:
-                    projet.en_cours = True
+                    # On parcours la liste des collaborateurs
+                    for collaborateur in self.collaborateurs:
+                        if collaborateur.disponible:
+                            # On parcours la liste des capacités du collaborateur
+                            for capacite in collaborateur.capacites:
+                                # Colaborateur disponible avec compétence correspondante
+                                if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                    collaborateurSurProjet.append(collaborateur)
+                                    #print("Colaborateur trouvé : ", collaborateur.nom)
+                                    collaborateurTrouve = True
+                                    break # Sortie de la boucle capacite
+                        if collaborateurTrouve:
+                            break # Sortie de la boucle Collaborateur
+                if(len(collaborateurSurProjet)==projet.nombre_activites):
+                    for collaborateur in collaborateurSurProjet:
+                        collaborateur.disponible = False
+                        projet.ajouterCollaborateur(collaborateur)
         self.day+=1
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathB)
+resolution.generer(pathC)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
 print(dateStop)
 #print(resolution.nombre_collaborateurs, resolution.nombre_projets)
 #print(resolution.collaborateurs)
+#print(resolution.projets)
 for i in range(dateStop):
     resolution.processDay()
+    pass
 
 nbProjetFini = 0
 for projet in resolution.projets:
     if projet.fini:
         nbProjetFini += 1
 
-print(nbProjetFini)
+print("Nombre de projet fini : ", nbProjetFini)
 
