@@ -71,7 +71,10 @@ class Resoudre:
         self.nombre_collaborateurs = 0
         self.nombre_projets = 0
         self.collaborateurs = []
+        self.collaborateursOccupes = []
         self.projets = []
+        self.projetsFini = []
+        self.projetsEnCours = []
         self.day = 0
 
     def generer(self, path):
@@ -98,13 +101,14 @@ class Resoudre:
 
     def processDay(self):
         # On met à jour la liste des projets en cours
-        for projet in self.projets:
+        for projet in self.projetsEnCours:
+            if projet.fini:
+                self.projetsFini.append(projet)
+                self.projetsEnCours.remove(projet)
             projet.diminuerJour()
-    
+
         # On parcours les projets
         for projet in self.projets:
-            if projet.fini or projet.en_cours:
-                continue
             # Si on arrive à la date limite du projet
             if self.day < projet.date_limite_depart + projet.score:
                 collaborateurSurProjet = []
@@ -133,11 +137,15 @@ class Resoudre:
                     for collaborateur in collaborateurSurProjet:
                         collaborateur.disponible = False
                         projet.ajouterCollaborateur(collaborateur)
+                    self.projetsEnCours.append(projet)
+                    self.projets.remove(projet)
+            else:
+                self.projets.remove(projet)
         self.day+=1
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathB)
+resolution.generer(pathE)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
@@ -150,7 +158,7 @@ for i in range(dateStop):
     pass
 
 nbProjetFini = 0
-for projet in resolution.projets:
+for projet in resolution.projetsFini:
     if projet.fini:
         nbProjetFini += 1
 
