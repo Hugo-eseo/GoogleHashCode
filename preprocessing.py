@@ -13,10 +13,21 @@ class Collaborateur:
         self.capacites = []
         self.nombre_capacites = 0
         self.disponible = True
+        self.activite_en_cours = None
     
     def ajouter_capacite(self, capacite, niveau):
         self.capacites.append((capacite, niveau))
         self.nombre_capacites += 1
+
+    def indexCapacite(self, capacite):
+        for i in range(self.nombre_capacites):
+            if capacite[0] == capacite[i][0]:
+                return i
+
+    def amelioration(self, capacite):
+        indexC = self.indexCapacite(capacite)
+        if self.activites[indexC][1] <= capacite[1]:
+            self.activites[indexC][1] += 1
 
     def __repr__(self):
         return f"{self.nom} {self.capacites}"
@@ -39,13 +50,17 @@ class Projet:
     
     def ajouter_activite(self, activite, niveau):
         self.activites.append((activite, niveau))
-        self.nombre_activites += 1
 
-    def ajouterCollaborateur(self, collabo):
+    def ajouterCollaborateur(self, collabo, activite):
         collabo.disponible = False
         self.collaborateurs.append(collabo)
+        collabo.activite_en_cours = activite
         if len(self.collaborateurs) == self.nombre_activites:
             self.en_cours = True
+            with open(pourHugo+"solution", "a") as fichier:
+                fichier.write("\n"+self.nom + "\n")
+                for collabo in self.collaborateurs:
+                    fichier.write(collabo.nom + " ")
 
     def diminuerJour(self):
         if self.en_cours and not self.fini:
@@ -54,6 +69,19 @@ class Projet:
                 self.fini = True
                 for collabo in self.collaborateurs:
                     collabo.disponible = True
+                    #Learning en cas de niveau d'activité égale à sa capacité
+                    collabo.amelioration()
+
+    def estMonitorable(self, listeCollabos):
+        #on teste si un collabo peut faire deux activites, si oui on l'ajoute dans une liste
+        moniteurs_potentiels = []
+        for collabo in listeCollabos:
+            if collabo.nombre_capacites > 1:
+                moniteurs_potentiels.append(collabo)
+        #on teste si un collabo possède une capacite de niveau -1 à une activité du projet
+        apprentis_potentiels = []
+        for collabo in listeCollabos:
+            pass
 
     def rechercheActivite(self):
         self.index_activite_recherchee += 1
@@ -99,37 +127,31 @@ class Resoudre:
     
         # On parcours les projets
         for projet in self.projets:
-            if projet.fini:
+            if projet.fini or projet.en_cours:
                 continue
-            projetNonRealisable = False
             # Si on arrive à la date limite du projet
-            if projet.date_limite_depart == self.day:
+            #if projet.date_limite_depart == self.day:
                 # On parcours les activités du projet
-                for activite in projet.activites:
-                    collaborateurTrouve = False
-                    if not collaborateurTrouve:
-                        # On parcours la liste des collaborateurs
-                        for collaborateur in self.collaborateurs:
-                            if collaborateur.disponible:
-                                # On parcours la liste des capacités du collaborateur
-                                for capacite in collaborateur.capacites:
-                                    # Colaborateur disponible avec compétence correspondante
-                                    if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
-                                        collaborateur.disponible = False
-                                        projet.ajouterCollaborateur(collaborateur)
-                                        collaborateurTrouve = True
-                                        break # Sortie de la boucle capacite
-                            if collaborateurTrouve:
-                                break # Sortie de la boucle Collaborateur
-                        if not collaborateurTrouve:
-                            projetNonRealisable = True
-                if not projetNonRealisable:
-                    projet.en_cours = True
+            for activite in projet.activites:
+                collaborateurTrouve = False
+                if not collaborateurTrouve:
+                    # On parcours la liste des collaborateurs
+                    for collaborateur in self.collaborateurs:
+                        if collaborateur.disponible:
+                            # On parcours la liste des capacités du collaborateur
+                            for capacite in collaborateur.capacites:
+                                # Colaborateur disponible avec compétence correspondante
+                                if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                    collaborateur.disponible = False
+                                    projet.ajouterCollaborateur(collaborateur, activite)
+                                    break # Sortie de la boucle capacite
+                        if collaborateurTrouve:
+                            break # Sortie de la boucle Collaborateur
         self.day+=1
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathB)
+resolution.generer(pourHugo+pathB)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
