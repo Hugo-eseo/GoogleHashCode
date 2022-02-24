@@ -8,7 +8,7 @@ pathF = "input_data/f_find_great_mentors.in.txt"
 pourHugo = "D:/code/hashcode/GoogleHashCode/"
 
 class Collaborateur:
-    def __init__(self, nom) -> None:
+    def __init__(self, nom):
         self.nom = nom
         self.capacites = []
         self.nombre_capacites = 0
@@ -46,7 +46,10 @@ class Resoudre:
         self.nombre_collaborateurs = 0
         self.nombre_projets = 0
         self.collaborateurs = []
+        self.collaborateursNonDispo = []
         self.projets = []
+        self.projetsEnCours = []
+        self.projetsTerminees = []
 
     def generer(self, path):
         with open(path, "r") as fichier:
@@ -70,9 +73,25 @@ class Resoudre:
                     proj.ajouter_activite(ligneActivite[0], int(ligneActivite[1]))
                 self.projets.append(proj)
 
+    def day(self):
+        for projet in self.projets:
+            for activite in projet.activites:
+                collaborateurTrouve = False
+                if not collaborateurTrouve:
+                    for collaborateur in self.collaborateurs:
+                        for capacite in collaborateur.capacites:
+                            # Colaborateur disponible avec compétence correspondante
+                            if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                self.collaborateursNonDispo.append(collaborateur)
+                                self.collaborateurs.remove(collaborateur)
+
+        pass
+
 #Test
 resolution = Resoudre()
-resolution.generer(pourHugo+pathA)
-print(resolution.nombre_collaborateurs, resolution.nombre_projets)
-print(resolution.collaborateurs)
+resolution.generer(pathA)
+resolution.projets.sort(key=lambda x: x.date_limite_depart)
+#print(resolution.nombre_collaborateurs, resolution.nombre_projets)
+#print(resolution.collaborateurs)
 print(resolution.projets)
+
