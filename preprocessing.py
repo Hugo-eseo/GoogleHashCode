@@ -72,7 +72,7 @@ class Resoudre:
 
 #Test
 resolution = Resoudre()
-resolution.generer(pourHugo+pathA)
+resolution.generer(pathA)
 print(resolution.nombre_collaborateurs, resolution.nombre_projets)
 print(resolution.collaborateurs)
 print(resolution.projets)
