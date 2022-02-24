@@ -17,8 +17,8 @@ class Collaborateur:
     def __init__(self, nom):
         self.nom = nom
         self.capacites = []
+∏
 
-    
     def ajouter_capacite(self, capacite, niveau):
         self.capacites.append((capacite, niveau))
 
