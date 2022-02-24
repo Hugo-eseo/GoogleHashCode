@@ -92,9 +92,30 @@ class Resoudre:
                     proj.ajouter_activite(ligneActivite[0], int(ligneActivite[1]))
                 self.projets.append(proj)
 
+
+    def boucle(self):
+        self.jours = 
+        for i in range(jours):
+            # avancer d'un jour
+            for projet in self.projets:
+                projet.diminuerJour()
+            
+        with open("solution", 'w') as f:
+            f.write("\n")
+            f.write(projet.nom + '\n')
+            f.write(projet.collaborateurs + '\n')
+        
+
+
+
 #Test
 resolution = Resoudre()
 resolution.generer(pathA)
 print(resolution.nombre_collaborateurs, resolution.nombre_projets)
 print(resolution.collaborateurs)
 print(resolution.projets)
+
+
+
+
+

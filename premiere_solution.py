@@ -15,3 +15,6 @@ def collaborateurs_dispo(liste_collaborateurs):
 jours = 100
 for i in range(jours):
     
+
+
+
