@@ -9,7 +9,7 @@ pathF = "input_data/f_find_great_mentors.in.txt"
 pourHugo = "D:/code/hashcode/GoogleHashCode/"
 
 class Collaborateur:
-    def __init__(self, nom) -> None:
+    def __init__(self, nom):
         self.nom = nom
         self.capacites = []
         self.nombre_capacites = 0
@@ -61,7 +61,7 @@ class Projet:
         return self.activites[self.index_activite_recherchee]
 
     def __repr__(self):
-        return f"{self.nom} Jours:{self.jours} Score:{self.score} BestBefore:{self.best_before} Nombre activites:{self.nombre_activites} DateLimiteDepart:{self.date_limite_depart}\n {self.activites}"
+        return f"{self.nom} Jours:{self.jours} Score:{self.score} BestBefore:{self.best_before} Nombre activites:{self.nombre_activites} DateLimiteDepart:{self.date_limite_depart}\n {self.activites}\n Fini:{self.fini}"
 
 class Resoudre:
     def __init__(self):
@@ -69,6 +69,7 @@ class Resoudre:
         self.nombre_projets = 0
         self.collaborateurs = []
         self.projets = []
+        self.day = 0
 
     def generer(self, path):
         with open(path, "r") as fichier:
@@ -92,30 +93,57 @@ class Resoudre:
                     proj.ajouter_activite(ligneActivite[0], int(ligneActivite[1]))
                 self.projets.append(proj)
 
-
-    def boucle(self):
-        self.jours = 
-        for i in range(jours):
-            # avancer d'un jour
-            for projet in self.projets:
-                projet.diminuerJour()
-            
-        with open("solution", 'w') as f:
-            f.write("\n")
-            f.write(projet.nom + '\n')
-            f.write(projet.collaborateurs + '\n')
-        
-
-
+    def processDay(self):
+        # On met à jour la liste des projets en cours
+        for projet in self.projets:
+            projet.diminuerJour()
+    
+        # On parcours les projets
+        for projet in self.projets:
+            if projet.fini:
+                continue
+            projetNonRealisable = False
+            # Si on arrive à la date limite du projet
+            if projet.date_limite_depart == self.day:
+                # On parcours les activités du projet
+                for activite in projet.activites:
+                    collaborateurTrouve = False
+                    if not collaborateurTrouve:
+                        # On parcours la liste des collaborateurs
+                        for collaborateur in self.collaborateurs:
+                            if collaborateur.disponible:
+                                # On parcours la liste des capacités du collaborateur
+                                for capacite in collaborateur.capacites:
+                                    # Colaborateur disponible avec compétence correspondante
+                                    if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                        collaborateur.disponible = False
+                                        projet.ajouterCollaborateur(collaborateur)
+                                        collaborateurTrouve = True
+                                        break # Sortie de la boucle capacite
+                            if collaborateurTrouve:
+                                break # Sortie de la boucle Collaborateur
+                        if not collaborateurTrouve:
+                            projetNonRealisable = True
+                if not projetNonRealisable:
+                    projet.en_cours = True
+        self.day+=1
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathA)
-print(resolution.nombre_collaborateurs, resolution.nombre_projets)
-print(resolution.collaborateurs)
-print(resolution.projets)
+resolution.generer(pathB)
+resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
+dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
+print(dateStop)
+#print(resolution.nombre_collaborateurs, resolution.nombre_projets)
+#print(resolution.collaborateurs)
+for i in range(dateStop):
+    resolution.processDay()
 
+nbProjetFini = 0
+for projet in resolution.projets:
+    if projet.fini:
+        nbProjetFini += 1
 
-
+print(nbProjetFini)
 
