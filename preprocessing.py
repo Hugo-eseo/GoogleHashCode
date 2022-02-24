@@ -45,6 +45,10 @@ class Projet:
         self.collaborateurs.append(collabo)
         if len(self.collaborateurs) == self.nombre_activites:
             self.en_cours = True
+            with open("solution", "a") as fichier:
+                fichier.write("\n"+self.nom + "\n")
+                for collabo in self.collaborateurs:
+                    fichier.write(collabo.nom + " ")
             #print("Projet démarré !")
 
     def diminuerJour(self):
@@ -102,29 +106,29 @@ class Resoudre:
             if projet.fini or projet.en_cours:
                 continue
             # Si on arrive à la date limite du projet
-            #if projet.date_limite_depart == self.day:
-            collaborateurSurProjet = []
-            # On parcours les activités du projet
-            for activite in projet.activites:
-                #print("Acitvité : ", activite)
-                collaborateurTrouve = False
-                # On parcours la liste des collaborateurs
-                for collaborateur in self.collaborateurs:
-                    if collaborateur.disponible:
-                        # On parcours la liste des capacités du collaborateur
-                        for capacite in collaborateur.capacites:
-                            # Colaborateur disponible avec compétence correspondante
-                            if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
-                                collaborateurSurProjet.append(collaborateur)
-                                #print("Colaborateur trouvé : ", collaborateur.nom)
-                                collaborateurTrouve = True
-                                break # Sortie de la boucle capacite
-                    if collaborateurTrouve:
-                        break # Sortie de la boucle Collaborateur
-            if(len(collaborateurSurProjet)==projet.nombre_activites):
-                for collaborateur in collaborateurSurProjet:
-                    collaborateur.disponible = False
-                    projet.ajouterCollaborateur(collaborateur)
+            if self.day < projet.date_limite_depart + projet.score:
+                collaborateurSurProjet = []
+                # On parcours les activités du projet
+                for activite in projet.activites:
+                    #print("Acitvité : ", activite)
+                    collaborateurTrouve = False
+                    # On parcours la liste des collaborateurs
+                    for collaborateur in self.collaborateurs:
+                        if collaborateur.disponible:
+                            # On parcours la liste des capacités du collaborateur
+                            for capacite in collaborateur.capacites:
+                                # Colaborateur disponible avec compétence correspondante
+                                if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
+                                    collaborateurSurProjet.append(collaborateur)
+                                    #print("Colaborateur trouvé : ", collaborateur.nom)
+                                    collaborateurTrouve = True
+                                    break # Sortie de la boucle capacite
+                        if collaborateurTrouve:
+                            break # Sortie de la boucle Collaborateur
+                if(len(collaborateurSurProjet)==projet.nombre_activites):
+                    for collaborateur in collaborateurSurProjet:
+                        collaborateur.disponible = False
+                        projet.ajouterCollaborateur(collaborateur)
         self.day+=1
 
 #Test
