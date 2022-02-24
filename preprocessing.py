@@ -1,3 +1,6 @@
+from operator import index
+
+
 pathA = "input_data/a_an_example.in.txt"
 pathB = "input_data/b_better_start_small.in.txt"
 pathC = "input_data/c_collaboration.in.txt"
@@ -16,18 +19,19 @@ class Collaborateur:
         self.activite_en_cours = None
     
     def ajouter_capacite(self, capacite, niveau):
-        self.capacites.append((capacite, niveau))
+        self.capacites.append([capacite, niveau])
         self.nombre_capacites += 1
 
     def indexCapacite(self, capacite):
         for i in range(self.nombre_capacites):
-            if capacite[0] == capacite[i][0]:
+            if capacite[0] == self.capacites[i][0]:
                 return i
+        return None
 
-    def amelioration(self, capacite):
-        indexC = self.indexCapacite(capacite)
-        if self.activites[indexC][1] <= capacite[1]:
-            self.activites[indexC][1] += 1
+    def amelioration(self):
+        indexC = self.indexCapacite(self.activite_en_cours)
+        if self.capacites[indexC][1] <= self.activite_en_cours[1]:
+            self.capacites[indexC][1] += 1
 
     def __repr__(self):
         return f"{self.nom} {self.capacites}"
@@ -53,8 +57,8 @@ class Projet:
 
     def ajouterCollaborateur(self, collabo, activite):
         collabo.disponible = False
-        self.collaborateurs.append(collabo)
         collabo.activite_en_cours = activite
+        self.collaborateurs.append(collabo)
         if len(self.collaborateurs) == self.nombre_activites:
             self.en_cours = True
             with open(pourHugo+"solution", "a") as fichier:
@@ -130,11 +134,12 @@ class Resoudre:
             if projet.fini or projet.en_cours:
                 continue
             # Si on arrive à la date limite du projet
-            #if projet.date_limite_depart == self.day:
+            if self.day < projet.date_limite_depart + projet.score:
+                collaborateurSurProjet = []
                 # On parcours les activités du projet
-            for activite in projet.activites:
-                collaborateurTrouve = False
-                if not collaborateurTrouve:
+                for activite in projet.activites:
+                    #print("Acitvité : ", activite)
+                    collaborateurTrouve = False
                     # On parcours la liste des collaborateurs
                     for collaborateur in self.collaborateurs:
                         if collaborateur.disponible:
@@ -142,11 +147,20 @@ class Resoudre:
                             for capacite in collaborateur.capacites:
                                 # Colaborateur disponible avec compétence correspondante
                                 if capacite[0] == activite[0] and capacite[1] >=  activite[1]:
-                                    collaborateur.disponible = False
-                                    projet.ajouterCollaborateur(collaborateur, activite)
+                                    if(collaborateur in collaborateurSurProjet):
+                                        break
+                                    collaborateurSurProjet.append((collaborateur, activite))
+                                    #print("Colaborateur trouvé : ", collaborateur.nom)
+                                    collaborateurTrouve = True
                                     break # Sortie de la boucle capacite
                         if collaborateurTrouve:
                             break # Sortie de la boucle Collaborateur
+                    if not collaborateurTrouve:
+                        break # Sortie du projet
+                if(len(collaborateurSurProjet)==projet.nombre_activites):
+                    for collaborateur in collaborateurSurProjet:
+                        collaborateur[0].disponible = False
+                        projet.ajouterCollaborateur(collaborateur[0], collaborateur[1])
         self.day+=1
 
 #Test
