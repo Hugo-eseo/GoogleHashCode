@@ -5,7 +5,6 @@ pathD = "input_data/d_dense_schedule.in.txt"
 pathE = "input_data/e_exceptional_skills.in.txt"
 pathF = "input_data/f_find_great_mentors.in.txt"
 
-
 liste_lignes = []
 with open(pathA, 'r') as f:
     for line in f:
@@ -14,8 +13,8 @@ with open(pathA, 'r') as f:
 
 
 
-class Colaborateur:
-    def __init__(self, nom) -> None:
+class Collaborateur:
+    def __init__(self, nom):
         self.nom = nom
         self.capacites = []
 
