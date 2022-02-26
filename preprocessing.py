@@ -85,8 +85,15 @@ class Resoudre:
         self.nombre_collaborateurs = 0
         self.nombre_projets = 0
         self.collaborateurs = []
+
+        # Skills des collaborateurs
+        self.skills = []
+        self.collaborateursSkills = []
+
         self.projets = []
         self.day = 0
+
+        self.nombreDeProjetNonRealisable = 0
 
     def generer(self, path):
         with open(path, "r") as fichier:
@@ -149,9 +156,68 @@ class Resoudre:
                         projet.ajouterCollaborateur(collaborateur[0], collaborateur[1])
         self.day+=1
 
+    def newPorcessDay(self):
+        # On met à jour la liste des projets en cours
+        for projet in self.projets:
+            projet.diminuerJour()
+        # On parcours les porjts
+        for projet in self.projets:
+            if projet.fini or projet.en_cours:
+                continue
+            # Tant que le projet est intéréssant à débuter
+            if self.day < projet.date_limite_depart + projet.score:
+                collaborateurSurProjet = []
+                collaborateurSurProjeBis = []
+                # On parcours la liste des activités
+                for activite in projet.activites:
+                    try:
+                        index = self.skills.index(activite[0])
+                    except:
+                        print("Pas normal")
+                        return
+                    # On cherche un collaborateur ayant les compétences requises
+                    for collaborateur in self.collaborateursSkills[index]:
+                        if(collaborateur.disponible):
+                            #print(activite)
+                            for i in range(len(collaborateur.capacites)):
+                                if collaborateur.capacites[i][0] == activite[0]:
+                                    break
+                            # Si il a la capacité recherchée
+                            if(collaborateur.capacites[i][1] >= activite[1]):
+                                # Si il est déjà sur le projet
+                                if(collaborateur in collaborateurSurProjeBis):
+                                        break
+                                collaborateurSurProjet.append((collaborateur, activite))
+                                collaborateurSurProjeBis.append((collaborateur))
+                                break # Sortie de la boucle activites
+                if(len(collaborateurSurProjet)==projet.nombre_activites):
+                    for collaborateur in collaborateurSurProjet:
+                        collaborateur[0].disponible = False
+                        projet.ajouterCollaborateur(collaborateur[0], collaborateur[1])
+            else:
+                self.nombreDeProjetNonRealisable +=1
+
+        self.day+=1
+
+
+
+    def processColloratteur(self):
+        for collaborateur in self.collaborateurs:
+            for capacite in collaborateur.capacites:
+                try:
+                    index = self.skills.index(capacite[0])
+                except:
+                    index = -1
+                if(index == -1):
+                    self.skills.append(capacite[0])
+                    self.collaborateursSkills.append([collaborateur])
+                else:
+                    self.collaborateursSkills[index].append(collaborateur)
+
+
 #Test
 resolution = Resoudre()
-resolution.generer(pathE)
+resolution.generer(pathC)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
@@ -159,8 +225,16 @@ print(dateStop)
 #print(resolution.nombre_collaborateurs, resolution.nombre_projets)
 #print(resolution.collaborateurs)
 #print(resolution.projets)
-for i in range(dateStop):
-    resolution.processDay()
+
+resolution.processColloratteur()
+#print(resolution.skills)
+#print("==========================")
+#print(resolution.collaborateursSkills)
+#print("==========================")
+
+for i in range(100):
+    resolution.newPorcessDay()
+    #resolution.processDay()
     pass
 
 nbProjetFini = 0
@@ -168,5 +242,6 @@ for projet in resolution.projets:
     if projet.fini:
         nbProjetFini += 1
 
+print("Nombre de projet impossible : ", resolution.nombreDeProjetNonRealisable)
 print("Nombre de projet fini : ", nbProjetFini)
 
