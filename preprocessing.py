@@ -217,7 +217,7 @@ class Resoudre:
 
 #Test
 resolution = Resoudre()
-resolution.generer(pathC)
+resolution.generer(pathB)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
 
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
@@ -232,7 +232,7 @@ resolution.processColloratteur()
 #print(resolution.collaborateursSkills)
 #print("==========================")
 
-for i in range(100):
+for i in range(dateStop):
     resolution.newPorcessDay()
     #resolution.processDay()
     pass
@@ -244,4 +244,3 @@ for projet in resolution.projets:
 
 print("Nombre de projet impossible : ", resolution.nombreDeProjetNonRealisable)
 print("Nombre de projet fini : ", nbProjetFini)
-
