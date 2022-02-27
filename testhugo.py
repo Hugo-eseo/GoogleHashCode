@@ -46,9 +46,16 @@ class Projet:
         self.activites = []
         self.collaborateurs = []
         self.date_limite_depart = self.best_before - self.jours
+        self.niveauMoyen = 0
     
     def ajouter_activite(self, activite, niveau):
         self.activites.append([activite, niveau])
+ 
+    def calulNiveauMoyen(self):
+        totalNiveau = 0
+        for activite in self.activites:
+            totalNiveau += activite[1]
+        self.niveauMoyen = totalNiveau/self.nombre_activites
 
     def ajouterCollaborateur(self, collabo, activite):
         collabo.activite_en_cours = activite
@@ -72,7 +79,8 @@ class Projet:
         self.jours -= 1
 
     def __repr__(self):
-        return self.nom
+        #return f"Nom : {self.nom} ; Niveau Moyen : {round(self.niveauMoyen,2)}"
+        return f"Nom : {self.nom} ; Nombre d'activités : {self.nombre_activites}"
         #return f"{self.nom} Jours:{self.jours} Score:{self.score} BestBefore:{self.best_before} Nombre activites:{self.nombre_activites} DateLimiteDepart:{self.date_limite_depart}\n {self.activites}\n"
 
 class Resoudre:
@@ -86,11 +94,11 @@ class Resoudre:
         # Collaborateurs Disponibles / non disponibles
         self.skills = []
         self.collaborateursDisponibles = []
-        #self.collaborateursNonDisponibles = []
 
         # Projets en cours/terminés
         self.projetsEnCours = []
         self.projetsFini =[]
+        self.nombreProjetNonFiniATemps = 0
 
         # Jour courant
         self.day = 0
@@ -124,6 +132,7 @@ class Resoudre:
                 for j in range(int(ligne[4])):
                     ligneActivite = fichier.readline().strip().split(" ")
                     proj.ajouter_activite(ligneActivite[0], int(ligneActivite[1]))
+                proj.calulNiveauMoyen()
                 self.projets.append(proj)
 
     def PorcessDay(self):
@@ -135,12 +144,6 @@ class Resoudre:
                 # On libère et on améliore les collaborateurs
                 for collaborateur in projet.collaborateurs:
                     collaborateur.amelioration()
-                    '''# On met à jour la liste des collaborateurs Disponible et non disponibles
-                    for capacite in collaborateur.capacites:
-                        index = self.skills.index(capacite[0])
-                        self.collaborateursDisponibles[index].append(collaborateur)
-                        self.collaborateursNonDisponibles[index].remove(collaborateur)'''
-                    #collaborateur.disponible = True
                 projet.supprimerTousLesCollaborateurs()
                 # On marque le projet comme terminé
                 self.projetsFini.append(projet)
@@ -158,35 +161,46 @@ class Resoudre:
                 for activite in projet.activites:
                     index = self.skills.index(activite[0])
                     # On cherche un collaborateur disponible ayant les compétences requises
-                    # On trie la liste avec ceux disponibles en premier
-                    #self.collaborateursDisponibles[index].sort(key=lambda x: x.disponible, reverse=True)
+                    collaborateurDeCote = None
+                    collaborateurSelectionne = None
                     for collaborateur in self.collaborateursDisponibles[index]:
                         # Dès qu'on arrive aux collaborateurs indisponibles, on sort de la boucle
-                        if(not collaborateur.disponible):
-                            break
-                        #if(collaborateur.disponible):
-                        # On cherche sa capacité dans sa propre liste de capacités
-                        for i in range(len(collaborateur.capacites)):
-                            if collaborateur.capacites[i][0] == activite[0]:
-                                break
-                        # Si il a le niveau requis
-                        if(collaborateur.capacites[i][1] >= activite[1]):
-                            # Si il est déjà sur le projet
-                            if(collaborateur in projet.collaborateurs):
-                                break # Sortie de la boucle activité
-                            projet.ajouterCollaborateur(collaborateur, activite)
-                            self.collaborateursDisponibles[index].append(self.collaborateursDisponibles[index].pop(self.collaborateursDisponibles[index].index(collaborateur)))
-                            break # Sortie de la boucle activites
+                        if(collaborateur.disponible):
+                            # On cherche sa capacité dans sa propre liste de capacités
+                            for i in range(len(collaborateur.capacites)):
+                                if collaborateur.capacites[i][0] == activite[0]:
+                                    break
+                            # Si il a parfaitement le niveau requis
+                            if(collaborateur.capacites[i][1] == activite[1]):
+                                # Si il n'est pas déjà sur le projet
+                                if(collaborateur in projet.collaborateurs):
+                                    continue # Collaborateur suivant
+                                # Sinon il est sélectionné
+                                collaborateurSelectionne = collaborateur
+                                break # On sort de la boucle collaborateur
+
+                            # Si il a un niveau supérieur à celui demandé
+                            elif (collaborateur.capacites[i][1] > activite[1]):
+                                # Si il n'est pas déjà sur le projet
+                                if(collaborateur in projet.collaborateurs):
+                                    continue # Collaborateur suivant
+                                # Si il à un niveau inférieur à celui déjà de côté
+                                try:
+                                    if(collaborateurDeCote[1] > collaborateur.capacites[i][1]):
+                                        collaborateurDeCote = [collaborateur, collaborateur.capacites[i][1]]
+                                except:
+                                    # On le met de côté !
+                                    collaborateurDeCote = [collaborateur, collaborateur.capacites[i][1]]
+                    if(collaborateurDeCote is not None or collaborateurSelectionne is not None):
+                        if(collaborateurSelectionne is None):
+                            collaborateurSelectionne = collaborateurDeCote[0]
+                        projet.ajouterCollaborateur(collaborateurSelectionne, activite)
+                    else:
+                        break # Sortie de la boucle activité
 
                 # Si le projet trouve tous ses collaborateurs
                 if(len(projet.collaborateurs)==projet.nombre_activites):
                     # On met à jour la liste des collaborateurs disponibles
-                    '''for collaborateur in projet.collaborateurs:
-                        collaborateur.disponible = False
-                        for capacite in collaborateur.capacites:
-                            index = self.skills.index(capacite[0])
-                            self.collaborateursNonDisponibles[index].append(collaborateur)
-                            self.collaborateursDisponibles[index].remove(collaborateur)'''
                     self.projetsEnCours.append(projet)
                     projet.demarrerProjet()
                     #print("Projet réalisable : ", projet)
@@ -197,15 +211,20 @@ class Resoudre:
             # Si le projet n'est plus réalisable (temps passé, on le supprime)
             else:
                 self.projets.remove(projet)
+                self.nombreProjetNonFiniATemps += 1
 
         self.day+=1
 
 start = time.time()
 resolution = Resoudre()
-resolution.generer(pathB)
+resolution.generer(pathE)
 resolution.projets.sort(key=lambda x: x.date_limite_depart)
-
 dateStop = resolution.projets[-1].best_before + resolution.projets[-1].jours
+
+resolution.projets.sort(key=lambda x: x.niveauMoyen)
+#print(resolution.projets)
+#print(resolution.collaborateurs)
+
 print("Dernier jour : ", dateStop)
 print("Nombre total de projets : ", resolution.nombre_projets)
 print("Nombre total de collaborateurs : ", resolution.nombre_collaborateurs)
@@ -217,6 +236,7 @@ for i in tqdm(range(dateStop)):
 
 print("Nombre de jours utilisés : ", i)
 print("Nombre de projet fini : ", len(resolution.projetsFini))
+print("Nombre de projet non commancés à temps : ", resolution.nombreProjetNonFiniATemps)
 
 end = time.time()
 print("Temps d'execution :", end - start, "s")
